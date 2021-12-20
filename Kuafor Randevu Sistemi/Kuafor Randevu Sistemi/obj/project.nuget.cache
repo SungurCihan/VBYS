@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "5sVY7MOLwCZw5YgEAFrhH8P0OA8dBk94PzW6Qf39njaY3Py187O3D5IYV6LaXhx1IUttHrTJ5AKSFEaWJJYLqA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Sungur\\source\\repos\\Kuafor Randevu Sistemi\\Kuafor Randevu Sistemi\\Kuafor Randevu Sistemi.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Sungur\\.nuget\\packages\\npgsql\\6.0.1\\npgsql.6.0.1.nupkg.sha512",
+    "C:\\Users\\Sungur\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

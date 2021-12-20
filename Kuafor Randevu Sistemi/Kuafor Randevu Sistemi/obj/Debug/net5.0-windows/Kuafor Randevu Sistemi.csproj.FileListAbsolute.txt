@@ -1,0 +1,24 @@
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\Kuafor Randevu Sistemi.exe
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\Kuafor Randevu Sistemi.deps.json
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\Kuafor Randevu Sistemi.runtimeconfig.json
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\Kuafor Randevu Sistemi.runtimeconfig.dev.json
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\Kuafor Randevu Sistemi.dll
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\ref\Kuafor Randevu Sistemi.dll
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\Kuafor Randevu Sistemi.pdb
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\Npgsql.dll
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\bin\Debug\net5.0-windows\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor_Randevu_Sistemi.Frm_Giris.resources
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor_Randevu_Sistemi.Frm_Anasayfa.resources
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor_Randevu_Sistemi.Frm_Guncelle.resources
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor_Randevu_Sistemi.Frm_Kayit.resources
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.csproj.GenerateResource.cache
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.AssemblyInfoInputs.cache
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.AssemblyInfo.cs
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.csproj.CoreCompileInputs.cache
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.csproj.CopyComplete
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.dll
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\ref\Kuafor Randevu Sistemi.dll
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.pdb
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.genruntimeconfig.cache
+C:\Users\Sungur\source\repos\Kuafor Randevu Sistemi\Kuafor Randevu Sistemi\obj\Debug\net5.0-windows\Kuafor Randevu Sistemi.csprojAssemblyReference.cache

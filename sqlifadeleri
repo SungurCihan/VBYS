@@ -1,0 +1,1538 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.2
+-- Dumped by pg_dump version 13.2
+
+-- Started on 2021-12-20 21:50:58
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 237 (class 1255 OID 25463)
+-- Name: bakiyedus(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.bakiyedus() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+declare 
+	customerId integer;
+	appointmentId integer;
+	bakiye integer;
+	servicePrice integer;
+begin
+customerId:=(select customer_id from appointments order by id desc limit 1);
+bakiye:=(select customer_balance from customers where id=customerId);
+appointmentId:=(select appointments.id from appointments order by id desc limit 1);
+servicePrice:=(select service_price from services inner join appointments on 
+			   services.id=appointments.service_id where appointments.id=appointmentId);
+update customers set customer_balance=bakiye-servicePrice where id=customerId;
+return new;
+end;
+$$;
+
+
+ALTER FUNCTION public.bakiyedus() OWNER TO postgres;
+
+--
+-- TOC entry 234 (class 1255 OID 25483)
+-- Name: customerofmonth(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.customerofmonth() RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+declare
+	firstName text;
+	lastName text;
+	sonuc text;
+begin
+	firstName:=(select first_name from users inner join customers on users.id=customers.user_id order by total_appointments desc limit 1);
+	return firstName;
+end;
+$$;
+
+
+ALTER FUNCTION public.customerofmonth() OWNER TO postgres;
+
+--
+-- TOC entry 236 (class 1255 OID 25486)
+-- Name: employeeofmonth(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.employeeofmonth() RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+declare
+	employeeName text;
+begin
+	employeeName:=(select first_name from users inner join employees on users.id=employees.user_id order by total_appointments desc limit 1);
+	return employeeName;
+end;
+$$;
+
+
+ALTER FUNCTION public.employeeofmonth() OWNER TO postgres;
+
+--
+-- TOC entry 238 (class 1255 OID 25496)
+-- Name: mostpreferred(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.mostpreferred(saloonid integer) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+declare
+	serviceId integer;
+	serviceName text;
+begin
+	serviceId:=(select service_id from appointments where saloon_id=saloonId group by service_id having count(service_id) > 0 
+				 order by count(service_id) desc limit 1);
+	serviceName:= (select service_name from services  where services.id=serviceId);
+	return serviceName;
+end;
+$$;
+
+
+ALTER FUNCTION public.mostpreferred(saloonid integer) OWNER TO postgres;
+
+--
+-- TOC entry 235 (class 1255 OID 25485)
+-- Name: saloonofmonth(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.saloonofmonth() RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+declare
+	saloonName text;
+begin
+	saloonName:=(select saloon_name from saloons order by total_appointments desc limit 1);
+	return saloonName;
+end;
+$$;
+
+
+ALTER FUNCTION public.saloonofmonth() OWNER TO postgres;
+
+--
+-- TOC entry 232 (class 1255 OID 25475)
+-- Name: totalappointmentsforcustomers(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.totalappointmentsforcustomers() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+declare
+	customerId integer;
+begin
+customerId:=(select customer_id from appointments order by id desc limit 1);
+update customers set total_appointments=total_appointments+1 where id=customerId;
+return new;
+end;
+$$;
+
+
+ALTER FUNCTION public.totalappointmentsforcustomers() OWNER TO postgres;
+
+--
+-- TOC entry 233 (class 1255 OID 25479)
+-- Name: totalappointmentsforemployees(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.totalappointmentsforemployees() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+declare
+	employeeId integer;
+begin
+employeeId:=(select employee_id from appointments order by id desc limit 1);
+update employees set total_appointments=total_appointments+1 where id=employeeId;
+return new;
+end;
+$$;
+
+
+ALTER FUNCTION public.totalappointmentsforemployees() OWNER TO postgres;
+
+--
+-- TOC entry 250 (class 1255 OID 25473)
+-- Name: totalappointmentsforsaloons(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.totalappointmentsforsaloons() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+declare
+	saloonId integer;
+begin
+saloonId:=(select saloon_id from appointments order by id desc limit 1);
+update saloons set total_appointments=total_appointments+1 where id=saloonId;
+return new;
+end;
+$$;
+
+
+ALTER FUNCTION public.totalappointmentsforsaloons() OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 210 (class 1259 OID 25237)
+-- Name: appointments; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.appointments (
+    id integer NOT NULL,
+    saloon_id integer NOT NULL,
+    employee_id integer NOT NULL,
+    customer_id integer NOT NULL,
+    service_id integer NOT NULL,
+    appointment_date date NOT NULL,
+    start_hour double precision NOT NULL,
+    end_hour double precision NOT NULL
+);
+
+
+ALTER TABLE public.appointments OWNER TO postgres;
+
+--
+-- TOC entry 204 (class 1259 OID 25187)
+-- Name: employees; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.employees (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    saloon_id integer NOT NULL,
+    rating double precision NOT NULL,
+    total_appointments integer DEFAULT 0
+);
+
+
+ALTER TABLE public.employees OWNER TO postgres;
+
+--
+-- TOC entry 200 (class 1259 OID 25170)
+-- Name: saloons; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.saloons (
+    id integer NOT NULL,
+    saloon_name character varying(35) NOT NULL,
+    address character varying(50) NOT NULL,
+    phone_number character(11)[] NOT NULL,
+    description character varying(200),
+    total_appointments integer DEFAULT 0
+);
+
+
+ALTER TABLE public.saloons OWNER TO postgres;
+
+--
+-- TOC entry 208 (class 1259 OID 25224)
+-- Name: services; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.services (
+    id integer NOT NULL,
+    saloon_id integer NOT NULL,
+    service_name character varying(35) NOT NULL,
+    service_price double precision NOT NULL
+);
+
+
+ALTER TABLE public.services OWNER TO postgres;
+
+--
+-- TOC entry 202 (class 1259 OID 25180)
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    first_name character varying(35) NOT NULL,
+    last_name character varying(35) NOT NULL,
+    email character varying(35) NOT NULL,
+    phone_number character(11) NOT NULL,
+    password character varying(35) NOT NULL
+);
+
+
+ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1259 OID 25453)
+-- Name: appointments_details; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.appointments_details AS
+ SELECT appointments.id,
+    saloons.saloon_name,
+    users.first_name,
+    users.last_name,
+    services.service_name,
+    appointments.appointment_date,
+    appointments.start_hour,
+    appointments.end_hour
+   FROM ((((public.appointments
+     JOIN public.saloons ON ((appointments.saloon_id = saloons.id)))
+     JOIN public.employees ON ((appointments.employee_id = employees.id)))
+     JOIN public.services ON ((appointments.service_id = services.id)))
+     JOIN public.users ON ((employees.user_id = users.id)));
+
+
+ALTER TABLE public.appointments_details OWNER TO postgres;
+
+--
+-- TOC entry 211 (class 1259 OID 25242)
+-- Name: appointments_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.appointments ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.appointments_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 206 (class 1259 OID 25206)
+-- Name: customers; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.customers (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    customer_balance double precision,
+    total_appointments integer DEFAULT 0
+);
+
+
+ALTER TABLE public.customers OWNER TO postgres;
+
+--
+-- TOC entry 207 (class 1259 OID 25211)
+-- Name: customers_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.customers ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.customers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 230 (class 1259 OID 25440)
+-- Name: employee_details; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.employee_details AS
+ SELECT employees.id,
+    employees.saloon_id,
+    employees.rating,
+    users.first_name,
+    users.last_name
+   FROM (public.employees
+     JOIN public.users ON ((employees.user_id = users.id)));
+
+
+ALTER TABLE public.employee_details OWNER TO postgres;
+
+--
+-- TOC entry 205 (class 1259 OID 25192)
+-- Name: employees_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.employees ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.employees_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 220 (class 1259 OID 25338)
+-- Name: followers; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.followers (
+    id integer NOT NULL,
+    customer_id integer NOT NULL,
+    saloon_id integer NOT NULL
+);
+
+
+ALTER TABLE public.followers OWNER TO postgres;
+
+--
+-- TOC entry 221 (class 1259 OID 25343)
+-- Name: folowers_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.followers ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.folowers_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 222 (class 1259 OID 25357)
+-- Name: images; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.images (
+    id integer NOT NULL,
+    saloon_id integer NOT NULL,
+    image_url character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.images OWNER TO postgres;
+
+--
+-- TOC entry 223 (class 1259 OID 25362)
+-- Name: images_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.images ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.images_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 226 (class 1259 OID 25390)
+-- Name: post_likes; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.post_likes (
+    id integer NOT NULL,
+    post_id integer NOT NULL,
+    customer_id integer NOT NULL
+);
+
+
+ALTER TABLE public.post_likes OWNER TO postgres;
+
+--
+-- TOC entry 227 (class 1259 OID 25395)
+-- Name: post_likes_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.post_likes ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.post_likes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 224 (class 1259 OID 25370)
+-- Name: posts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.posts (
+    id integer NOT NULL,
+    saloon_id integer NOT NULL,
+    image_id integer NOT NULL,
+    post_content character varying(200) NOT NULL
+);
+
+
+ALTER TABLE public.posts OWNER TO postgres;
+
+--
+-- TOC entry 225 (class 1259 OID 25375)
+-- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.posts ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.posts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 214 (class 1259 OID 25280)
+-- Name: saloon_comment_responses; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.saloon_comment_responses (
+    id integer NOT NULL,
+    saloon_comment_id integer NOT NULL,
+    response_content character varying(200) NOT NULL
+);
+
+
+ALTER TABLE public.saloon_comment_responses OWNER TO postgres;
+
+--
+-- TOC entry 215 (class 1259 OID 25285)
+-- Name: saloon_comment_responses_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.saloon_comment_responses ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.saloon_comment_responses_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 212 (class 1259 OID 25273)
+-- Name: saloon_comments; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.saloon_comments (
+    id integer NOT NULL,
+    appointment_id integer NOT NULL,
+    customer_id integer NOT NULL,
+    comment_content character varying(200) NOT NULL
+);
+
+
+ALTER TABLE public.saloon_comments OWNER TO postgres;
+
+--
+-- TOC entry 213 (class 1259 OID 25278)
+-- Name: saloon_comments_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.saloon_comments ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.saloon_comments_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 201 (class 1259 OID 25178)
+-- Name: saloons_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.saloons ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.saloons_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 209 (class 1259 OID 25229)
+-- Name: services_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.services ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.services_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 218 (class 1259 OID 25319)
+-- Name: star_count_types; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.star_count_types (
+    id integer NOT NULL,
+    name character varying(35) NOT NULL
+);
+
+
+ALTER TABLE public.star_count_types OWNER TO postgres;
+
+--
+-- TOC entry 219 (class 1259 OID 25324)
+-- Name: star_count_types_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.star_count_types ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.star_count_types_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 216 (class 1259 OID 25300)
+-- Name: star_counts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.star_counts (
+    id integer NOT NULL,
+    saloon_id integer NOT NULL,
+    customer_id integer NOT NULL,
+    type_id integer NOT NULL,
+    appointment_id integer NOT NULL,
+    star_count double precision NOT NULL
+);
+
+
+ALTER TABLE public.star_counts OWNER TO postgres;
+
+--
+-- TOC entry 217 (class 1259 OID 25305)
+-- Name: star_counts_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.star_counts ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.star_counts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 228 (class 1259 OID 25409)
+-- Name: stories; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.stories (
+    id integer NOT NULL,
+    saloon_id integer NOT NULL,
+    image_id integer NOT NULL
+);
+
+
+ALTER TABLE public.stories OWNER TO postgres;
+
+--
+-- TOC entry 229 (class 1259 OID 25414)
+-- Name: stories_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.stories ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.stories_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 203 (class 1259 OID 25185)
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.users ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.users_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    MAXVALUE 1000
+    CACHE 1
+);
+
+
+--
+-- TOC entry 3174 (class 0 OID 25237)
+-- Dependencies: 210
+-- Data for Name: appointments; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (1, 2, 4, 1, 10, '2021-12-18', 10, 10.2);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (8, 1, 2, 1, 1, '2021-12-20', 15.15, 15.45);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (9, 1, 2, 1, 1, '2021-12-20', 15.15, 15.45);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (10, 3, 5, 1, 15, '2021-12-20', 17.1, 17.4);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (11, 1, 1, 1, 9, '2021-12-20', 18.1, 18.25);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (12, 1, 1, 1, 9, '2021-12-20', 18.1, 18.25);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (13, 1, 1, 1, 9, '2021-12-20', 18.1, 18.25);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (14, 1, 1, 1, 9, '2021-12-20', 18.1, 18.25);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (16, 2, 4, 1, 22, '2021-12-20', 1945, 20);
+INSERT INTO public.appointments (id, saloon_id, employee_id, customer_id, service_id, appointment_date, start_hour, end_hour) OVERRIDING SYSTEM VALUE VALUES (17, 3, 5, 1, 7, '2021-12-20', 12.25, 12.55);
+
+
+--
+-- TOC entry 3170 (class 0 OID 25206)
+-- Dependencies: 206
+-- Data for Name: customers; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.customers (id, user_id, customer_balance, total_appointments) OVERRIDING SYSTEM VALUE VALUES (1, 1, 110, 6);
+
+
+--
+-- TOC entry 3168 (class 0 OID 25187)
+-- Dependencies: 204
+-- Data for Name: employees; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.employees (id, user_id, saloon_id, rating, total_appointments) OVERRIDING SYSTEM VALUE VALUES (1, 3, 1, 4.3, 0);
+INSERT INTO public.employees (id, user_id, saloon_id, rating, total_appointments) OVERRIDING SYSTEM VALUE VALUES (2, 4, 1, 3.9, 0);
+INSERT INTO public.employees (id, user_id, saloon_id, rating, total_appointments) OVERRIDING SYSTEM VALUE VALUES (3, 5, 2, 2.5, 0);
+INSERT INTO public.employees (id, user_id, saloon_id, rating, total_appointments) OVERRIDING SYSTEM VALUE VALUES (6, 8, 4, 5, 0);
+INSERT INTO public.employees (id, user_id, saloon_id, rating, total_appointments) OVERRIDING SYSTEM VALUE VALUES (4, 6, 2, 1.7, 1);
+INSERT INTO public.employees (id, user_id, saloon_id, rating, total_appointments) OVERRIDING SYSTEM VALUE VALUES (5, 7, 3, 0.6, 1);
+
+
+--
+-- TOC entry 3184 (class 0 OID 25338)
+-- Dependencies: 220
+-- Data for Name: followers; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3186 (class 0 OID 25357)
+-- Dependencies: 222
+-- Data for Name: images; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3190 (class 0 OID 25390)
+-- Dependencies: 226
+-- Data for Name: post_likes; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3188 (class 0 OID 25370)
+-- Dependencies: 224
+-- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3178 (class 0 OID 25280)
+-- Dependencies: 214
+-- Data for Name: saloon_comment_responses; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3176 (class 0 OID 25273)
+-- Dependencies: 212
+-- Data for Name: saloon_comments; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3164 (class 0 OID 25170)
+-- Dependencies: 200
+-- Data for Name: saloons; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.saloons (id, saloon_name, address, phone_number, description, total_appointments) OVERRIDING SYSTEM VALUE VALUES (4, 'Aleyna Kuaför', 'Siteler mahallesi, çınar park', '{"0542586548 "}', 'Harika lokasyon, güzellik merkezi', 1);
+INSERT INTO public.saloons (id, saloon_name, address, phone_number, description, total_appointments) OVERRIDING SYSTEM VALUE VALUES (1, 'Birlik Kuaför', 'Yeni mahalle, Sahil pasajı', '{"45456456   "}', 'Hijyen ve kalitenin adresi', 4);
+INSERT INTO public.saloons (id, saloon_name, address, phone_number, description, total_appointments) OVERRIDING SYSTEM VALUE VALUES (2, 'By Barış', 'Kazım dirik mahallesi, hükümet konağı karşısı', '{04542586598}', 'Kaliteli kesim ve yakışıklı görünüm ama bir parça pahalı', 2);
+INSERT INTO public.saloons (id, saloon_name, address, phone_number, description, total_appointments) OVERRIDING SYSTEM VALUE VALUES (3, 'İsa Berber', 'Kazım dirik mahallesi, hükümet konağı yanı', '{54212558712}', 'Fiyar performans garantisi ve hoş sohbet adersi', 2);
+
+
+--
+-- TOC entry 3172 (class 0 OID 25224)
+-- Dependencies: 208
+-- Data for Name: services; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (1, 1, 'Saç Kesim', 35);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (2, 2, 'Saç Kesim', 35);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (3, 3, 'Saç Kesim', 45);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (4, 4, 'Saç Kesim', 60);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (5, 1, 'Sakal', 20);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (6, 2, 'Sakal', 20);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (7, 3, 'Sakal', 25);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (8, 4, 'Sakal', 25);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (9, 1, 'Saç Yıkama', 10);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (10, 2, 'Saç Yıkama', 10);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (11, 3, 'Saç Yıkama', 10);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (12, 4, 'Saç Yıkama', 10);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (13, 4, 'Saç Boyama', 60);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (14, 3, 'Saç Boyama', 50);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (15, 3, 'Manikür', 20);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (16, 4, 'Manikür', 18);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (17, 2, 'Pedikür', 15);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (18, 4, 'Pedikür', 19);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (19, 1, 'Ağda', 20);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (20, 4, 'Ağda', 25);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (21, 1, 'Ustura', 25);
+INSERT INTO public.services (id, saloon_id, service_name, service_price) OVERRIDING SYSTEM VALUE VALUES (22, 2, 'Ustura', 20);
+
+
+--
+-- TOC entry 3182 (class 0 OID 25319)
+-- Dependencies: 218
+-- Data for Name: star_count_types; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3180 (class 0 OID 25300)
+-- Dependencies: 216
+-- Data for Name: star_counts; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3192 (class 0 OID 25409)
+-- Dependencies: 228
+-- Data for Name: stories; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3166 (class 0 OID 25180)
+-- Dependencies: 202
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.users (id, first_name, last_name, email, phone_number, password) OVERRIDING SYSTEM VALUE VALUES (1, 'Sungur', 'Cihan', '1', '45678912354', '1');
+INSERT INTO public.users (id, first_name, last_name, email, phone_number, password) OVERRIDING SYSTEM VALUE VALUES (3, 'asdas', 'asdassdas', 'asdas', 'asdasda    ', 'asdaa');
+INSERT INTO public.users (id, first_name, last_name, email, phone_number, password) OVERRIDING SYSTEM VALUE VALUES (4, 'Barkın', 'Gündüz', 'barkin@hotmail.com', '05428576452', '123456');
+INSERT INTO public.users (id, first_name, last_name, email, phone_number, password) OVERRIDING SYSTEM VALUE VALUES (5, 'Beyhude', 'Pelesenk', 'pelesenk@gmail.com', '05428576445', '123456bensen');
+INSERT INTO public.users (id, first_name, last_name, email, phone_number, password) OVERRIDING SYSTEM VALUE VALUES (6, 'Beyti', 'Kebap', 'beyti@gmail.com', '05247894152', 'sarmazabi');
+INSERT INTO public.users (id, first_name, last_name, email, phone_number, password) OVERRIDING SYSTEM VALUE VALUES (7, 'Melda', 'Karkın', 'mel-kin@hotmail.com', '05245846584', 'kar123456');
+INSERT INTO public.users (id, first_name, last_name, email, phone_number, password) OVERRIDING SYSTEM VALUE VALUES (8, 'Beytullah', 'Nurullah', 'bey-kin@hotmail.com', '05245846584', 'beyrr123456');
+
+
+--
+-- TOC entry 3199 (class 0 OID 0)
+-- Dependencies: 211
+-- Name: appointments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.appointments_id_seq', 17, true);
+
+
+--
+-- TOC entry 3200 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: customers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.customers_id_seq', 1, true);
+
+
+--
+-- TOC entry 3201 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: employees_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.employees_id_seq', 6, true);
+
+
+--
+-- TOC entry 3202 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: folowers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.folowers_id_seq', 1, false);
+
+
+--
+-- TOC entry 3203 (class 0 OID 0)
+-- Dependencies: 223
+-- Name: images_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.images_id_seq', 1, false);
+
+
+--
+-- TOC entry 3204 (class 0 OID 0)
+-- Dependencies: 227
+-- Name: post_likes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.post_likes_id_seq', 1, false);
+
+
+--
+-- TOC entry 3205 (class 0 OID 0)
+-- Dependencies: 225
+-- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.posts_id_seq', 1, false);
+
+
+--
+-- TOC entry 3206 (class 0 OID 0)
+-- Dependencies: 215
+-- Name: saloon_comment_responses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.saloon_comment_responses_id_seq', 1, false);
+
+
+--
+-- TOC entry 3207 (class 0 OID 0)
+-- Dependencies: 213
+-- Name: saloon_comments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.saloon_comments_id_seq', 1, false);
+
+
+--
+-- TOC entry 3208 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: saloons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.saloons_id_seq', 4, true);
+
+
+--
+-- TOC entry 3209 (class 0 OID 0)
+-- Dependencies: 209
+-- Name: services_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.services_id_seq', 22, true);
+
+
+--
+-- TOC entry 3210 (class 0 OID 0)
+-- Dependencies: 219
+-- Name: star_count_types_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.star_count_types_id_seq', 1, false);
+
+
+--
+-- TOC entry 3211 (class 0 OID 0)
+-- Dependencies: 217
+-- Name: star_counts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.star_counts_id_seq', 1, false);
+
+
+--
+-- TOC entry 3212 (class 0 OID 0)
+-- Dependencies: 229
+-- Name: stories_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.stories_id_seq', 1, false);
+
+
+--
+-- TOC entry 3213 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 8, true);
+
+
+--
+-- TOC entry 2969 (class 2606 OID 25241)
+-- Name: appointments appointments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.appointments
+    ADD CONSTRAINT appointments_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2963 (class 2606 OID 25210)
+-- Name: customers customers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.customers
+    ADD CONSTRAINT customers_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2959 (class 2606 OID 25191)
+-- Name: employees employees_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.employees
+    ADD CONSTRAINT employees_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2990 (class 2606 OID 25342)
+-- Name: followers folowers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.followers
+    ADD CONSTRAINT folowers_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2993 (class 2606 OID 25361)
+-- Name: images images_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.images
+    ADD CONSTRAINT images_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3001 (class 2606 OID 25394)
+-- Name: post_likes post_likes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.post_likes
+    ADD CONSTRAINT post_likes_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2997 (class 2606 OID 25374)
+-- Name: posts posts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT posts_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2978 (class 2606 OID 25284)
+-- Name: saloon_comment_responses saloon_comment_responses_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.saloon_comment_responses
+    ADD CONSTRAINT saloon_comment_responses_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2975 (class 2606 OID 25277)
+-- Name: saloon_comments saloon_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.saloon_comments
+    ADD CONSTRAINT saloon_comments_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2955 (class 2606 OID 25177)
+-- Name: saloons saloons_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.saloons
+    ADD CONSTRAINT saloons_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2967 (class 2606 OID 25228)
+-- Name: services services_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT services_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2986 (class 2606 OID 25323)
+-- Name: star_count_types star_count_types_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.star_count_types
+    ADD CONSTRAINT star_count_types_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2984 (class 2606 OID 25304)
+-- Name: star_counts star_counts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.star_counts
+    ADD CONSTRAINT star_counts_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 3005 (class 2606 OID 25413)
+-- Name: stories stories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.stories
+    ADD CONSTRAINT stories_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2957 (class 2606 OID 25184)
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2979 (class 1259 OID 25337)
+-- Name: fki_fkey_appointments_for_star_counts; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_appointments_for_star_counts ON public.star_counts USING btree (appointment_id);
+
+
+--
+-- TOC entry 2987 (class 1259 OID 25350)
+-- Name: fki_fkey_customer_for_followers; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_customer_for_followers ON public.followers USING btree (customer_id);
+
+
+--
+-- TOC entry 2970 (class 1259 OID 25266)
+-- Name: fki_fkey_customers_for_appointments; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_customers_for_appointments ON public.appointments USING btree (customer_id);
+
+
+--
+-- TOC entry 2998 (class 1259 OID 25408)
+-- Name: fki_fkey_customers_for_post_likes; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_customers_for_post_likes ON public.post_likes USING btree (customer_id);
+
+
+--
+-- TOC entry 2980 (class 1259 OID 25318)
+-- Name: fki_fkey_customers_for_star_counts; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_customers_for_star_counts ON public.star_counts USING btree (customer_id);
+
+
+--
+-- TOC entry 2971 (class 1259 OID 25260)
+-- Name: fki_fkey_employees_for_appointments; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_employees_for_appointments ON public.appointments USING btree (employee_id);
+
+
+--
+-- TOC entry 2994 (class 1259 OID 25389)
+-- Name: fki_fkey_images_for_posts; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_images_for_posts ON public.posts USING btree (image_id);
+
+
+--
+-- TOC entry 3002 (class 1259 OID 25427)
+-- Name: fki_fkey_images_for_stories; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_images_for_stories ON public.stories USING btree (image_id);
+
+
+--
+-- TOC entry 2999 (class 1259 OID 25402)
+-- Name: fki_fkey_posts_for_post_likes; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_posts_for_post_likes ON public.post_likes USING btree (post_id);
+
+
+--
+-- TOC entry 2976 (class 1259 OID 25292)
+-- Name: fki_fkey_saloon_comments_for_comment_responses; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_saloon_comments_for_comment_responses ON public.saloon_comment_responses USING btree (saloon_comment_id);
+
+
+--
+-- TOC entry 2965 (class 1259 OID 25236)
+-- Name: fki_fkey_saloons; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_saloons ON public.services USING btree (saloon_id);
+
+
+--
+-- TOC entry 2972 (class 1259 OID 25254)
+-- Name: fki_fkey_saloons_for_appointments; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_saloons_for_appointments ON public.appointments USING btree (saloon_id);
+
+
+--
+-- TOC entry 2988 (class 1259 OID 25356)
+-- Name: fki_fkey_saloons_for_followers; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_saloons_for_followers ON public.followers USING btree (saloon_id);
+
+
+--
+-- TOC entry 2991 (class 1259 OID 25369)
+-- Name: fki_fkey_saloons_for_images; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_saloons_for_images ON public.images USING btree (saloon_id);
+
+
+--
+-- TOC entry 2995 (class 1259 OID 25383)
+-- Name: fki_fkey_saloons_for_posts; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_saloons_for_posts ON public.posts USING btree (saloon_id);
+
+
+--
+-- TOC entry 2981 (class 1259 OID 25312)
+-- Name: fki_fkey_saloons_for_star_counts; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_saloons_for_star_counts ON public.star_counts USING btree (saloon_id);
+
+
+--
+-- TOC entry 3003 (class 1259 OID 25421)
+-- Name: fki_fkey_saloons_for_stories; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_saloons_for_stories ON public.stories USING btree (saloon_id);
+
+
+--
+-- TOC entry 2973 (class 1259 OID 25272)
+-- Name: fki_fkey_services_for_appointments; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_services_for_appointments ON public.appointments USING btree (service_id);
+
+
+--
+-- TOC entry 2982 (class 1259 OID 25331)
+-- Name: fki_fkey_star_count_types_for_star_counts; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_fkey_star_count_types_for_star_counts ON public.star_counts USING btree (type_id);
+
+
+--
+-- TOC entry 2960 (class 1259 OID 25205)
+-- Name: fki_saloons_fkey; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_saloons_fkey ON public.employees USING btree (saloon_id);
+
+
+--
+-- TOC entry 2961 (class 1259 OID 25199)
+-- Name: fki_users_fkey; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_users_fkey ON public.employees USING btree (user_id);
+
+
+--
+-- TOC entry 2964 (class 1259 OID 25223)
+-- Name: fki_users_fkey_for_customers; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fki_users_fkey_for_customers ON public.customers USING btree (user_id);
+
+
+--
+-- TOC entry 3029 (class 2620 OID 25464)
+-- Name: appointments bakiyedustrig; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER bakiyedustrig AFTER INSERT ON public.appointments FOR EACH ROW EXECUTE FUNCTION public.bakiyedus();
+
+
+--
+-- TOC entry 3028 (class 2620 OID 25476)
+-- Name: appointments totalappointmentsforcustomerstrig; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER totalappointmentsforcustomerstrig AFTER INSERT ON public.appointments FOR EACH ROW EXECUTE FUNCTION public.totalappointmentsforcustomers();
+
+
+--
+-- TOC entry 3031 (class 2620 OID 25480)
+-- Name: appointments totalappointmentsforemployeestrig; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER totalappointmentsforemployeestrig AFTER INSERT ON public.appointments FOR EACH ROW EXECUTE FUNCTION public.totalappointmentsforemployees();
+
+
+--
+-- TOC entry 3030 (class 2620 OID 25474)
+-- Name: appointments totalappointmentsforsaloonstrig; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER totalappointmentsforsaloonstrig AFTER INSERT ON public.appointments FOR EACH ROW EXECUTE FUNCTION public.totalappointmentsforsaloons();
+
+
+--
+-- TOC entry 3018 (class 2606 OID 25332)
+-- Name: star_counts fkey_appointments_for_star_counts; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.star_counts
+    ADD CONSTRAINT fkey_appointments_for_star_counts FOREIGN KEY (appointment_id) REFERENCES public.appointments(id);
+
+
+--
+-- TOC entry 3019 (class 2606 OID 25345)
+-- Name: followers fkey_customer_for_followers; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.followers
+    ADD CONSTRAINT fkey_customer_for_followers FOREIGN KEY (customer_id) REFERENCES public.customers(id);
+
+
+--
+-- TOC entry 3010 (class 2606 OID 25261)
+-- Name: appointments fkey_customers_for_appointments; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.appointments
+    ADD CONSTRAINT fkey_customers_for_appointments FOREIGN KEY (customer_id) REFERENCES public.customers(id);
+
+
+--
+-- TOC entry 3025 (class 2606 OID 25403)
+-- Name: post_likes fkey_customers_for_post_likes; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.post_likes
+    ADD CONSTRAINT fkey_customers_for_post_likes FOREIGN KEY (customer_id) REFERENCES public.customers(id);
+
+
+--
+-- TOC entry 3016 (class 2606 OID 25313)
+-- Name: star_counts fkey_customers_for_star_counts; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.star_counts
+    ADD CONSTRAINT fkey_customers_for_star_counts FOREIGN KEY (customer_id) REFERENCES public.customers(id);
+
+
+--
+-- TOC entry 3013 (class 2606 OID 25255)
+-- Name: appointments fkey_employees_for_appointments; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.appointments
+    ADD CONSTRAINT fkey_employees_for_appointments FOREIGN KEY (employee_id) REFERENCES public.employees(id);
+
+
+--
+-- TOC entry 3023 (class 2606 OID 25384)
+-- Name: posts fkey_images_for_posts; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT fkey_images_for_posts FOREIGN KEY (image_id) REFERENCES public.images(id);
+
+
+--
+-- TOC entry 3027 (class 2606 OID 25422)
+-- Name: stories fkey_images_for_stories; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.stories
+    ADD CONSTRAINT fkey_images_for_stories FOREIGN KEY (image_id) REFERENCES public.images(id);
+
+
+--
+-- TOC entry 3024 (class 2606 OID 25397)
+-- Name: post_likes fkey_posts_for_post_likes; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.post_likes
+    ADD CONSTRAINT fkey_posts_for_post_likes FOREIGN KEY (post_id) REFERENCES public.posts(id);
+
+
+--
+-- TOC entry 3014 (class 2606 OID 25287)
+-- Name: saloon_comment_responses fkey_saloon_comments_for_comment_responses; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.saloon_comment_responses
+    ADD CONSTRAINT fkey_saloon_comments_for_comment_responses FOREIGN KEY (saloon_comment_id) REFERENCES public.saloon_comments(id);
+
+
+--
+-- TOC entry 3012 (class 2606 OID 25249)
+-- Name: appointments fkey_saloons_for_appointments; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.appointments
+    ADD CONSTRAINT fkey_saloons_for_appointments FOREIGN KEY (saloon_id) REFERENCES public.saloons(id);
+
+
+--
+-- TOC entry 3020 (class 2606 OID 25351)
+-- Name: followers fkey_saloons_for_followers; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.followers
+    ADD CONSTRAINT fkey_saloons_for_followers FOREIGN KEY (saloon_id) REFERENCES public.saloons(id);
+
+
+--
+-- TOC entry 3021 (class 2606 OID 25364)
+-- Name: images fkey_saloons_for_images; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.images
+    ADD CONSTRAINT fkey_saloons_for_images FOREIGN KEY (saloon_id) REFERENCES public.saloons(id);
+
+
+--
+-- TOC entry 3022 (class 2606 OID 25378)
+-- Name: posts fkey_saloons_for_posts; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.posts
+    ADD CONSTRAINT fkey_saloons_for_posts FOREIGN KEY (saloon_id) REFERENCES public.saloons(id);
+
+
+--
+-- TOC entry 3009 (class 2606 OID 25231)
+-- Name: services fkey_saloons_for_services; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.services
+    ADD CONSTRAINT fkey_saloons_for_services FOREIGN KEY (saloon_id) REFERENCES public.saloons(id);
+
+
+--
+-- TOC entry 3015 (class 2606 OID 25307)
+-- Name: star_counts fkey_saloons_for_star_counts; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.star_counts
+    ADD CONSTRAINT fkey_saloons_for_star_counts FOREIGN KEY (saloon_id) REFERENCES public.saloons(id);
+
+
+--
+-- TOC entry 3026 (class 2606 OID 25416)
+-- Name: stories fkey_saloons_for_stories; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.stories
+    ADD CONSTRAINT fkey_saloons_for_stories FOREIGN KEY (saloon_id) REFERENCES public.saloons(id);
+
+
+--
+-- TOC entry 3011 (class 2606 OID 25267)
+-- Name: appointments fkey_services_for_appointments; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.appointments
+    ADD CONSTRAINT fkey_services_for_appointments FOREIGN KEY (service_id) REFERENCES public.services(id);
+
+
+--
+-- TOC entry 3017 (class 2606 OID 25326)
+-- Name: star_counts fkey_star_count_types_for_star_counts; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.star_counts
+    ADD CONSTRAINT fkey_star_count_types_for_star_counts FOREIGN KEY (type_id) REFERENCES public.star_count_types(id);
+
+
+--
+-- TOC entry 3006 (class 2606 OID 25200)
+-- Name: employees saloons_fkey_for_empployees; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.employees
+    ADD CONSTRAINT saloons_fkey_for_empployees FOREIGN KEY (saloon_id) REFERENCES public.saloons(id);
+
+
+--
+-- TOC entry 3008 (class 2606 OID 25213)
+-- Name: customers users_fkey_for_customers; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.customers
+    ADD CONSTRAINT users_fkey_for_customers FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- TOC entry 3007 (class 2606 OID 25194)
+-- Name: employees users_fkey_for_users; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.employees
+    ADD CONSTRAINT users_fkey_for_users FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+-- Completed on 2021-12-20 21:50:59
+
+--
+-- PostgreSQL database dump complete
+--
+
